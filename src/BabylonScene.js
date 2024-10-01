@@ -38,54 +38,57 @@ const BabylonScene = () => {
   const sceneRef = useRef(null);
   const meshConfigurationsRef = useRef(initialMeshConfigurations);
   const [, forceUpdate] = useState();
+  const [xr, setXR] = useState(null);
+  const [xrInput, setXRInput] = useState(null);
 
   const createScene = useCallback(async function() {
     const scene = new BABYLON.Scene(engineRef.current);
     sceneRef.current = scene;
 
-    const supported = await BABYLON.WebXRSessionManager.IsSessionSupportedAsync('immersive-ar');
+    const supported = await BABYLON.WebXRSessionManager.IsSessionSupportedAsync('immersive-vr');
     if (!supported) {
-    // ar available, session supported
-    const camera = new BABYLON.ArcRotateCamera("camera", 0, 1.2, 40, new BABYLON.Vector3(0, 0, 0), scene);
-    camera.attachControl(canvasRef.current, true);
-    camera.inputs.addMouseWheel();
-    // Ground
-    const ground = BABYLON.MeshBuilder.CreateGround('ground', {width: 20, height: 20}, scene);
-    ground.position = new BABYLON.Vector3(0, -1, 0);
-    ground.receiveShadows = true;
+      console.log("AR is not supported on this device");
+      // ar not available, session not supported
+      const camera = new BABYLON.ArcRotateCamera("camera", 0, 1.2, 40, new BABYLON.Vector3(0, 0, 0), scene);
+      camera.attachControl(canvasRef.current, true);
+      camera.inputs.addMouseWheel();
+      // Ground
+      const ground = BABYLON.MeshBuilder.CreateGround('ground', {width: 20, height: 20}, scene);
+      ground.position = new BABYLON.Vector3(0, -1, 0);
+      ground.receiveShadows = true;
 
-    // GUI
-    const advancedTexture = GUI.AdvancedDynamicTexture.CreateFullscreenUI("UI", true, scene);
-    const input1 = new GUI.InputText("Input");
-    input1.width = "700px";
-    input1.maxWidth = 0.2;
-    input1.height = "40px";
-    input1.placeholderText = "Type here...";
-    input1.color = "white";
-    input1.background = "grey";
-    input1.top = "35%"; 
-    input1.left = "0%";
-    advancedTexture.addControl(input1);
+      // GUI
+      const advancedTexture = GUI.AdvancedDynamicTexture.CreateFullscreenUI("UI", true, scene);
+      const input1 = new GUI.InputText("Input");
+      input1.width = "700px";
+      input1.maxWidth = 0.2;
+      input1.height = "40px";
+      input1.placeholderText = "Type here...";
+      input1.color = "white";
+      input1.background = "grey";
+      input1.top = "35%"; 
+      input1.left = "0%";
+      advancedTexture.addControl(input1);
 
-    // Add event listener for Enter key
-    input1.onKeyboardEventProcessedObservable.add((eventData) => {
-      if (eventData.key === "Enter") {
-        const meshConfigString = JSON.stringify(meshConfigurationsRef.current, null, 2);
-        callBedrockAPI(input1.text, meshConfigString)
-          .then(response => {
-            console.log(response);
-            const updatedConfig = JSON.parse(response);
-            meshConfigurationsRef.current = updateMeshConfig(meshConfigurationsRef.current, updatedConfig);
-            disposeAllMeshes(scene);
-            createMeshesFromConfig(scene, meshConfigurationsRef.current);
-            input1.text = "";
-            forceUpdate({});  // Force a re-render
-          })
-          .catch(error => {
-            console.error("Error calling Bedrock API:", error);
-          });
-      }
-    });
+      // Add event listener for Enter key
+      input1.onKeyboardEventProcessedObservable.add((eventData) => {
+        if (eventData.key === "Enter") {
+          const meshConfigString = JSON.stringify(meshConfigurationsRef.current, null, 2);
+          callBedrockAPI(input1.text, meshConfigString)
+            .then(response => {
+              console.log(response);
+              const updatedConfig = JSON.parse(response);
+              meshConfigurationsRef.current = updateMeshConfig(meshConfigurationsRef.current, updatedConfig);
+              disposeAllMeshes(scene);
+              createMeshesFromConfig(scene, meshConfigurationsRef.current);
+              input1.text = "";
+              forceUpdate({});  // Force a re-render
+            })
+            .catch(error => {
+              console.error("Error calling Bedrock API:", error);
+            });
+        }
+      });
     }
 
     const light = new BABYLON.PointLight("pointLight", new BABYLON.Vector3(5, 5, -5), scene);
@@ -95,14 +98,114 @@ const BabylonScene = () => {
     createMeshesFromConfig(scene, meshConfigurationsRef.current);
 
     if(supported){
-    await scene.createDefaultXRExperienceAsync({
-      //floorMeshes: [ground],
-      uiOptions: {
-        sessionMode: "immersive-ar",
-        referenceSpaceType: "local-floor",
-      },
-    });
-  }
+      try {
+        const xrExperience = await scene.createDefaultXRExperienceAsync({
+          uiOptions: {
+            sessionMode: "immersive-vr",
+            referenceSpaceType: "local-floor",
+          },
+        });
+        setXR(xrExperience);
+
+        const featuresManager = xrExperience.baseExperience.featuresManager;
+        //featuresManager.enableFeature(BABYLON.WebXRFeatureName.HIT_TEST, "latest");
+
+        setXRInput(xrExperience.input);
+
+        //Setting up audio recording
+        let mediaRecorder;
+        let audioChunks = [];
+        let isRecording = false;
+
+        async function setupAudioRecording() {
+          try {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            mediaRecorder = new MediaRecorder(stream);
+            
+            mediaRecorder.ondataavailable = (event) => {
+              audioChunks.push(event.data);
+            };
+
+            mediaRecorder.onstop = () => {
+              const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
+              const audioUrl = URL.createObjectURL(audioBlob);
+              console.log("Audio recording finished:", audioUrl);
+              audioChunks = [];
+            };
+          } catch (error) {
+            console.error("Error setting up audio recording:", error);
+          }
+        }
+
+        //checking path
+        //console.log("Current script path:", document.currentScript.src);
+        console.log("Current script path:", document.currentScript ? document.currentScript.src : "Unable to determine");
+        console.log("Base URL:", document.baseURI);
+
+        // setting up sound play
+        var startRecordingSound = new BABYLON.Sound("startRecording", "start.mp3", scene);
+        var stopRecordingSound = new BABYLON.Sound("stopRecording", "stop.mp3", scene);
+
+        await setupAudioRecording();
+
+        // Adding input controls
+        xrExperience.input.onControllerAddedObservable.add((controller) => {
+          console.log("Controller added:", controller.handedness);
+          
+          controller.onMotionControllerInitObservable.add((motionController) => {
+            console.log("Motion controller initialized:", motionController.handedness);
+            
+            const mainComponent = motionController.getMainComponent();
+            
+            if (mainComponent) {
+              console.log("Main component found for", motionController.handedness, "controller");
+              
+              mainComponent.onButtonStateChangedObservable.add((component) => {
+                if (component.changes.pressed) {
+                  if (component.pressed) {
+                    console.log(motionController.handedness, "trigger pressed");
+                    if (!isRecording) {
+                      console.log("Starting recording");
+                      if (startRecordingSound) {
+                        startRecordingSound.play();
+                      } else {
+                        console.error("Start recording sound not available");
+                      }
+                      if (mediaRecorder) {
+                        mediaRecorder.start();
+                      } else {
+                        console.error("Media recorder not available");
+                      }
+                      isRecording = true;
+                    }
+                  } else {
+                    console.log(motionController.handedness, "trigger released");
+                    if (isRecording) {
+                      console.log("Stopping recording");
+                      if (stopRecordingSound) {
+                        stopRecordingSound.play();
+                      } else {
+                        console.error("Stop recording sound not available");
+                      }
+                      if (mediaRecorder) {
+                        mediaRecorder.stop();
+                      } else {
+                        console.error("Media recorder not available");
+                      }
+                      isRecording = false;
+                    }
+                  }
+                }
+              });
+            } else {
+              console.error("No main component found for", motionController.handedness, "controller");
+            }
+          });
+        });
+      } catch (error) {
+        console.error("Error initializing WebXR:", error);
+      }
+    }
     return scene;
   }, []);
 
