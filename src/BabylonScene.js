@@ -143,8 +143,10 @@ const BabylonScene = () => {
         console.log("Base URL:", document.baseURI);
 
         // setting up sound play
-        var startRecordingSound = new BABYLON.Sound("startRecording", "start.mp3", scene);
-        var stopRecordingSound = new BABYLON.Sound("stopRecording", "stop.mp3", scene);
+        const audioStartSrc = process.env.PUBLIC_URL + '/start.mp3';
+        const audioStopSrc = process.env.PUBLIC_URL + '/stop.mp3';
+        var startRecordingSound = new BABYLON.Sound("startRecording", audioStartSrc, scene);
+        var stopRecordingSound = new BABYLON.Sound("stopRecording", audioStopSrc, scene);
 
         await setupAudioRecording();
 
