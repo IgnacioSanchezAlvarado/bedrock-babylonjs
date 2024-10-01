@@ -95,6 +95,7 @@ const BabylonScene = () => {
       floorMeshes: [ground],
       uiOptions: {
         sessionMode: "immersive-ar",
+        referenceSpaceType: "local-floor",
       },
     });
 
