@@ -9,11 +9,11 @@ const initialMeshConfigurations = {
     type: 'sphere',
     name: 'greenSphere',
     options: {
-      diameter: 2,
+      diameter: 1,
       segments: 32
     },
     color: 'Green',
-    position: [0, 5, 0],
+    position: [0, 0.5, 0],
     rotation: [0, 45, 0],
     scaling: [1, 1, 1]
   },
@@ -26,9 +26,9 @@ const initialMeshConfigurations = {
       tessellation: 32
     },
     color: 'Red',
-    position: [0, 8, 0],
+    position: [0, 2, 0],
     rotation: [0, 0, 0],
-    scaling: [1.2, 1.2, 1.2]
+    scaling: [0.5, 0.5, 0.5]
   }
 };
 
@@ -43,16 +43,12 @@ const BabylonScene = () => {
     const scene = new BABYLON.Scene(engineRef.current);
     sceneRef.current = scene;
 
+    const supported = await BABYLON.WebXRSessionManager.IsSessionSupportedAsync('immersive-ar');
+    if (!supported) {
+    // ar available, session supported
     const camera = new BABYLON.ArcRotateCamera("camera", 0, 1.2, 40, new BABYLON.Vector3(0, 0, 0), scene);
     camera.attachControl(canvasRef.current, true);
     camera.inputs.addMouseWheel();
-
-    const light = new BABYLON.PointLight("pointLight", new BABYLON.Vector3(5, 5, -5), scene);
-    new BABYLON.HemisphericLight("HemiLight", new BABYLON.Vector3(0, 0, 0), scene);
-    new BABYLON.ShadowGenerator(1024, light);
-
-    createMeshesFromConfig(scene, meshConfigurationsRef.current);
-
     // Ground
     const ground = BABYLON.MeshBuilder.CreateGround('ground', {width: 20, height: 20}, scene);
     ground.position = new BABYLON.Vector3(0, -1, 0);
@@ -90,15 +86,23 @@ const BabylonScene = () => {
           });
       }
     });
+    }
 
+    const light = new BABYLON.PointLight("pointLight", new BABYLON.Vector3(5, 5, -5), scene);
+    new BABYLON.HemisphericLight("HemiLight", new BABYLON.Vector3(0, 0, 0), scene);
+    new BABYLON.ShadowGenerator(1024, light);
+
+    createMeshesFromConfig(scene, meshConfigurationsRef.current);
+
+    if(supported){
     await scene.createDefaultXRExperienceAsync({
-      floorMeshes: [ground],
+      //floorMeshes: [ground],
       uiOptions: {
         sessionMode: "immersive-ar",
         referenceSpaceType: "local-floor",
       },
     });
-
+  }
     return scene;
   }, []);
 
