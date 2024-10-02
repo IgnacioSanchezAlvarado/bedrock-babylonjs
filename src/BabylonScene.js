@@ -3,6 +3,7 @@ import * as BABYLON from '@babylonjs/core';
 import * as GUI from '@babylonjs/gui';
 import { callBedrockAPI } from './helpers/bedrockApi.js';
 import { createMeshesFromConfig, updateMeshConfig, disposeAllMeshes } from './helpers/createMeshes.js';
+import { sendAudioToAPI } from './helpers/AudioRecording.js';
 
 const initialMeshConfigurations = {
   object1: {
@@ -127,7 +128,8 @@ const BabylonScene = () => {
             };
 
             mediaRecorder.onstop = () => {
-              const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
+              const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+              sendAudioToAPI(audioBlob);
               const audioUrl = URL.createObjectURL(audioBlob);
               console.log("Audio recording finished:", audioUrl);
               audioChunks = [];

@@ -1,7 +1,7 @@
 // bedrockApi.js
 
 async function callBedrockAPI(prompt, meshConfig) {
-    const apiUrl = 'https://mwcydfbk0g.execute-api.us-east-1.amazonaws.com/default/babylonjs-bedrock-integration'; // Replace with your actual API Gateway URL
+    const apiUrl = 'https://bies9qjdf5.execute-api.us-west-2.amazonaws.com/default/babylonjs-capstone-bedrock-call'; // Replace with your actual API Gateway URL
   
     try {
       const response = await fetch(apiUrl, {
