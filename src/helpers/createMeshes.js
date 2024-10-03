@@ -1,6 +1,6 @@
 import * as BABYLON from '@babylonjs/core';
 
-function createMeshesFromConfig(scene, configurations) {
+function createMeshesFromConfig(scene, configurations, supported) {
     const meshes = {};
 
     const meshBuilders = {
@@ -61,9 +61,26 @@ function createMeshesFromConfig(scene, configurations) {
             const mesh = builder(config.name, { ...config.options, updatable: true }, scene);
 
             // Position, rotation, and scaling
+            if(supported){
+                config.position[2] += 1;
+                mesh.position = new BABYLON.Vector3(...(config.position || [0, 0, 0]));
+                mesh.rotation = new BABYLON.Vector3(...(config.rotation || [0, 0, 0]).map(deg => deg * Math.PI / 180));
+                const scalar = 0.5;
+                config.scaling[0] *= scalar;
+                config.scaling[1] *= scalar;
+                config.scaling[2] *= scalar;
+                mesh.scaling = new BABYLON.Vector3(...(config.scaling || [1, 1, 1]));
+
+
+            }
+            else{
             mesh.position = new BABYLON.Vector3(...(config.position || [0, 0, 0]));
             mesh.rotation = new BABYLON.Vector3(...(config.rotation || [0, 0, 0]).map(deg => deg * Math.PI / 180));
             mesh.scaling = new BABYLON.Vector3(...(config.scaling || [1, 1, 1]));
+            }
+
+
+
 
             // Material
             if (config.material) {

@@ -25,8 +25,10 @@ async function sendAudioToAPI(audioBlob) {
     
     if (response.ok) {
       const result = await response.json();
-      console.log('Audio sent successfully:', result);
-      return result;
+      console.log('Audio sent successfully:');
+      var transcript = result.transcript;
+      console.log(transcript);
+      return transcript;
     } else {
       console.error('Failed to send audio:', await response.text());
     }

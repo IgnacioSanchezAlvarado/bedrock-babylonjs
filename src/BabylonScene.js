@@ -14,22 +14,22 @@ const initialMeshConfigurations = {
       segments: 32
     },
     color: 'Green',
-    position: [0, 0.5, 0],
-    rotation: [0, 45, 0],
+    position: [0, 0, 0],
+    rotation: [0, 0, 0],
     scaling: [1, 1, 1]
   },
   object2: {
     type: 'torus',
     name: 'redTorus',
     options: {
-      diameter: 5,
+      diameter: 4,
       thickness: 1,
       tessellation: 32
     },
     color: 'Red',
     position: [0, 2, 0],
     rotation: [0, 0, 0],
-    scaling: [0.5, 0.5, 0.5]
+    scaling: [1, 1, 1]
   }
 };
 
@@ -46,7 +46,7 @@ const BabylonScene = () => {
     const scene = new BABYLON.Scene(engineRef.current);
     sceneRef.current = scene;
 
-    const supported = await BABYLON.WebXRSessionManager.IsSessionSupportedAsync('immersive-vr');
+    const supported = await BABYLON.WebXRSessionManager.IsSessionSupportedAsync('immersive-ar');
     if (!supported) {
       console.log("AR is not supported on this device");
       // ar not available, session not supported
@@ -96,13 +96,13 @@ const BabylonScene = () => {
     new BABYLON.HemisphericLight("HemiLight", new BABYLON.Vector3(0, 0, 0), scene);
     new BABYLON.ShadowGenerator(1024, light);
 
-    createMeshesFromConfig(scene, meshConfigurationsRef.current);
+    createMeshesFromConfig(scene, meshConfigurationsRef.current, supported);
 
     if(supported){
       try {
         const xrExperience = await scene.createDefaultXRExperienceAsync({
           uiOptions: {
-            sessionMode: "immersive-vr",
+            sessionMode: "immersive-ar",
             referenceSpaceType: "local-floor",
           },
         });
@@ -129,7 +129,21 @@ const BabylonScene = () => {
 
             mediaRecorder.onstop = () => {
               const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
-              sendAudioToAPI(audioBlob);
+              sendAudioToAPI(audioBlob).then(response => {
+              console.log(response);    
+              const meshConfigString = JSON.stringify(meshConfigurationsRef.current, null, 2);
+              callBedrockAPI(response, meshConfigString)
+                .then(response => {
+                  console.log(response);
+                  const updatedConfig = JSON.parse(response);
+                  meshConfigurationsRef.current = updateMeshConfig(meshConfigurationsRef.current, updatedConfig);
+                  disposeAllMeshes(scene);
+                  createMeshesFromConfig(scene, meshConfigurationsRef.current);
+                  forceUpdate({});  // Force a re-render
+                })
+                .catch(error => {
+                  console.error("Error calling Bedrock API:", error);
+                });});
               const audioUrl = URL.createObjectURL(audioBlob);
               console.log("Audio recording finished:", audioUrl);
               audioChunks = [];
