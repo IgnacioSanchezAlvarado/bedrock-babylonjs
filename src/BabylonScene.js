@@ -7,16 +7,17 @@ import { sendAudioToAPI } from './helpers/AudioRecording.js';
 
 const initialMeshConfigurations = {
   object1: {
-    type: 'sphere',
-    name: 'greenSphere',
+    type: 'box',
+    name: 'brownbox',
     options: {
       diameter: 1,
       segments: 32
     },
-    color: 'Green',
+    color: 'brown',
     position: [0, 0, 0],
     rotation: [0, 0, 0],
-    scaling: [1, 1, 1]
+    scaling: [1, 1, 1],
+    animation: true
   },
   object2: {
     type: 'torus',
@@ -29,7 +30,8 @@ const initialMeshConfigurations = {
     color: 'Red',
     position: [0, 2, 0],
     rotation: [0, 0, 0],
-    scaling: [1, 1, 1]
+    scaling: [1, 1, 1],
+    animation: false
   }
 };
 
@@ -81,7 +83,8 @@ const BabylonScene = () => {
               const updatedConfig = JSON.parse(response);
               meshConfigurationsRef.current = updateMeshConfig(meshConfigurationsRef.current, updatedConfig);
               disposeAllMeshes(scene);
-              createMeshesFromConfig(scene, meshConfigurationsRef.current);
+              const { meshes, animationGroup } = createMeshesFromConfig(scene, meshConfigurationsRef.current);
+              animationGroup.play(true);
               input1.text = "";
               forceUpdate({});  // Force a re-render
             })
@@ -96,7 +99,8 @@ const BabylonScene = () => {
     new BABYLON.HemisphericLight("HemiLight", new BABYLON.Vector3(0, 0, 0), scene);
     new BABYLON.ShadowGenerator(1024, light);
 
-    createMeshesFromConfig(scene, meshConfigurationsRef.current, supported);
+    const { meshes, animationGroup } = createMeshesFromConfig(scene, meshConfigurationsRef.current);
+    animationGroup.play(true);
 
     if(supported){
       try {
@@ -138,7 +142,8 @@ const BabylonScene = () => {
                   const updatedConfig = JSON.parse(response);
                   meshConfigurationsRef.current = updateMeshConfig(meshConfigurationsRef.current, updatedConfig);
                   disposeAllMeshes(scene);
-                  createMeshesFromConfig(scene, meshConfigurationsRef.current);
+                  const { meshes, animationGroup } = createMeshesFromConfig(scene, meshConfigurationsRef.current);
+                  animationGroup.play(true);
                   forceUpdate({});  // Force a re-render
                 })
                 .catch(error => {

@@ -2,6 +2,7 @@ import * as BABYLON from '@babylonjs/core';
 
 function createMeshesFromConfig(scene, configurations, supported) {
     const meshes = {};
+    const animationGroup = new BABYLON.AnimationGroup("meshAnimations");
 
     const meshBuilders = {
         sphere: BABYLON.MeshBuilder.CreateSphere,
@@ -79,6 +80,36 @@ function createMeshesFromConfig(scene, configurations, supported) {
             mesh.scaling = new BABYLON.Vector3(...(config.scaling || [1, 1, 1]));
             }
 
+            // Animation
+            console.log("mesh: ", mesh.name, "animation: ", config.animation)
+            if(config.animation){
+                var frameRate = 10;
+                var yRot = new BABYLON.Animation("yRot", "rotation.y", frameRate, BABYLON.Animation.ANIMATIONTYPE_FLOAT, BABYLON.Animation.ANIMATIONLOOPMODE_CYCLE);
+
+                var keyFramesR = []; 
+            
+                keyFramesR.push({
+                    frame: 0,
+                    value: 0
+                });
+            
+                keyFramesR.push({
+                    frame: frameRate,
+                    value: Math.PI
+                });
+            
+                keyFramesR.push({
+                    frame: 2 * frameRate,
+                    value: 2 * Math.PI
+                });
+            
+            
+                yRot.setKeys(keyFramesR);
+            
+                animationGroup.addTargetedAnimation(yRot, mesh);
+                console.log("Applied rotation to:", mesh.name);
+            }
+
 
 
 
@@ -128,7 +159,7 @@ function createMeshesFromConfig(scene, configurations, supported) {
         }
     }
 
-    return meshes;
+    return { meshes, animationGroup };
 }
 
 function updateMeshConfig(originalConfig, updatedConfig) {
