@@ -113,7 +113,39 @@ const BabylonScene = () => {
         setXR(xrExperience);
 
         const featuresManager = xrExperience.baseExperience.featuresManager;
-        //featuresManager.enableFeature(BABYLON.WebXRFeatureName.HIT_TEST, "latest");
+
+        //pop-up panel
+        const manager = new BABYLON.GUI.GUI3DManager(scene);
+
+        const panel = new BABYLON.GUI.HolographicSlate("popup");
+        panel.width = "30cm";
+        panel.height = "20cm";
+        panel.scaling = new BABYLON.Vector3(0.5, 0.5, 0.5);
+        panel.position = new BABYLON.Vector3(0, 1.5, 1);
+        manager.addControl(panel);
+        panel.isVisible = true; // Hide initially
+
+        const stackPanel = new BABYLON.GUI.StackPanel3D();
+        panel.content = stackPanel;
+
+        const text = new BABYLON.GUI.TextBlock();
+        text.text = "This is a pop-up message!";
+        text.color = "white";
+        text.fontSize = 24;
+        stackPanel.addControl(text);
+        
+        const button = new BABYLON.GUI.Button3D("dismissButton");
+        const buttonText = new BABYLON.GUI.TextBlock();
+        buttonText.text = "Got it!";
+        buttonText.color = "white";
+        buttonText.fontSize = 16;
+        button.content = buttonText;
+        stackPanel.addControl(button);
+
+        button.onPointerUpObservable.add(() => {
+          panel.dispose();
+        });
+        
 
         setXRInput(xrExperience.input);
 
