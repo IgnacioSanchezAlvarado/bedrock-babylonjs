@@ -66,7 +66,7 @@ function createMeshesFromConfig(scene, configurations, supported) {
                 config.position[2] += 1;
                 mesh.position = new BABYLON.Vector3(...(config.position || [0, 0, 0]));
                 mesh.rotation = new BABYLON.Vector3(...(config.rotation || [0, 0, 0]).map(deg => deg * Math.PI / 180));
-                const scalar = 0.5;
+                const scalar = 0.2;
                 config.scaling[0] *= scalar;
                 config.scaling[1] *= scalar;
                 config.scaling[2] *= scalar;

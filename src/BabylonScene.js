@@ -14,7 +14,7 @@ const initialMeshConfigurations = {
       segments: 32
     },
     color: 'brown',
-    position: [0, 0, 0],
+    position: [0, 1, 0],
     rotation: [0, 0, 0],
     scaling: [1, 1, 1],
     animation: true
