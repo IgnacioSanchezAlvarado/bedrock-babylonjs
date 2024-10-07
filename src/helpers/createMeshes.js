@@ -62,22 +62,23 @@ function createMeshesFromConfig(scene, configurations, supported) {
             const mesh = builder(config.name, { ...config.options, updatable: true }, scene);
 
             // Position, rotation, and scaling
+            console.log("supported: ", supported);
+
             if(supported){
-                config.position[2] = config.position[2] + 5;
-                mesh.position = new BABYLON.Vector3(...(config.position || [0, 0, 0]));
-                mesh.rotation = new BABYLON.Vector3(...(config.rotation || [0, 0, 0]).map(deg => deg * Math.PI / 180));
-                const scalar = 0.1;
-                config.scaling[0] = config.scaling[0] * scalar;
-                config.scaling[1] = config.scaling[1] * scalar;
-                config.scaling[2] = config.scaling[2] * scalar;
-                mesh.scaling = new BABYLON.Vector3(...(config.scaling || [1, 1, 1]));
-
-
-            }
-            else{
+            console.log("Applying AR config");
+            config.position[2] = config.position[2] + 2;
             mesh.position = new BABYLON.Vector3(...(config.position || [0, 0, 0]));
             mesh.rotation = new BABYLON.Vector3(...(config.rotation || [0, 0, 0]).map(deg => deg * Math.PI / 180));
+            const scalar = 0.5;
+            config.scaling[0] = config.scaling[0] * scalar;
+            config.scaling[1] = config.scaling[1] * scalar;
+            config.scaling[2] = config.scaling[2] * scalar;
             mesh.scaling = new BABYLON.Vector3(...(config.scaling || [1, 1, 1]));
+            }else{
+                console.log("Applying VR config");
+                mesh.position = new BABYLON.Vector3(...(config.position || [0, 0, 0]));
+                mesh.rotation = new BABYLON.Vector3(...(config.rotation || [0, 0, 0]).map(deg => deg * Math.PI / 180));
+                mesh.scaling = new BABYLON.Vector3(...(config.scaling || [1, 1, 1]));
             }
 
             // Animation

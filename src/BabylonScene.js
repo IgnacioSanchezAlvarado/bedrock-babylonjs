@@ -1,9 +1,12 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import * as BABYLON from '@babylonjs/core';
+import "@babylonjs/loaders/glTF";
 import * as GUI from '@babylonjs/gui';
 import { callBedrockAPI } from './helpers/bedrockApi.js';
 import { createMeshesFromConfig, updateMeshConfig, disposeAllMeshes } from './helpers/createMeshes.js';
 import { sendAudioToAPI } from './helpers/AudioRecording.js';
+
+
 
 const initialMeshConfigurations = {
   object1: {
@@ -48,7 +51,7 @@ const BabylonScene = () => {
     const scene = new BABYLON.Scene(engineRef.current);
     sceneRef.current = scene;
 
-    const supported = await BABYLON.WebXRSessionManager.IsSessionSupportedAsync('immersive-ar');
+    const supported = await BABYLON.WebXRSessionManager.IsSessionSupportedAsync('immersive-vr');
     if (!supported) {
       console.log("AR is not supported on this device");
       // ar not available, session not supported
@@ -83,7 +86,7 @@ const BabylonScene = () => {
               const updatedConfig = JSON.parse(response);
               meshConfigurationsRef.current = updateMeshConfig(meshConfigurationsRef.current, updatedConfig);
               disposeAllMeshes(scene);
-              const { meshes, animationGroup } = createMeshesFromConfig(scene, meshConfigurationsRef.current);
+              const { meshes, animationGroup } = createMeshesFromConfig(scene, meshConfigurationsRef.current, supported);
               animationGroup.play(true);
               input1.text = "";
               forceUpdate({});  // Force a re-render
@@ -99,55 +102,20 @@ const BabylonScene = () => {
     new BABYLON.HemisphericLight("HemiLight", new BABYLON.Vector3(0, 0, 0), scene);
     new BABYLON.ShadowGenerator(1024, light);
 
-    const { meshes, animationGroup } = createMeshesFromConfig(scene, meshConfigurationsRef.current);
+    const { meshes, animationGroup } = createMeshesFromConfig(scene, meshConfigurationsRef.current, supported);
     animationGroup.play(true);
 
     if(supported){
       try {
         const xrExperience = await scene.createDefaultXRExperienceAsync({
           uiOptions: {
-            sessionMode: "immersive-ar",
+            sessionMode: "immersive-vr",
             referenceSpaceType: "local-floor",
           },
         });
         setXR(xrExperience);
 
         const featuresManager = xrExperience.baseExperience.featuresManager;
-
-        //pop-up panel
-        const manager = new GUI.GUI3DManager(scene);
-
-        const panel = new GUI.HolographicSlate("popup");
-        panel.width = "30cm";
-        panel.height = "20cm";
-        panel.scaling = new BABYLON.Vector3(0.5, 0.5, 0.5);
-        panel.position = new BABYLON.Vector3(0, 1.5, 1);
-        manager.addControl(panel);
-        panel.isVisible = true; // Hide initially
-
-        const stackPanel = new GUI.StackPanel3D();
-        panel.content = stackPanel;
-
-        const text = new GUI.TextBlock();
-        text.text = "This is a pop-up message!";
-        text.color = "white";
-        text.fontSize = 24;
-        stackPanel.addControl(text);
-        
-        const button = new GUI.Button3D("dismissButton");
-        const buttonText = new GUI.TextBlock();
-        buttonText.text = "Got it!";
-        buttonText.color = "white";
-        buttonText.fontSize = 16;
-        button.content = buttonText;
-        stackPanel.addControl(button);
-
-        button.onPointerUpObservable.add(() => {
-          panel.dispose();
-        });
-        
-
-        setXRInput(xrExperience.input);
 
         //Setting up audio recording
         let mediaRecorder;
@@ -174,7 +142,7 @@ const BabylonScene = () => {
                   const updatedConfig = JSON.parse(response);
                   meshConfigurationsRef.current = updateMeshConfig(meshConfigurationsRef.current, updatedConfig);
                   disposeAllMeshes(scene);
-                  const { meshes, animationGroup } = createMeshesFromConfig(scene, meshConfigurationsRef.current);
+                  const { meshes, animationGroup } = createMeshesFromConfig(scene, meshConfigurationsRef.current, supported);
                   animationGroup.play(true);
                   forceUpdate({});  // Force a re-render
                 })
@@ -261,6 +229,52 @@ const BabylonScene = () => {
         console.error("Error initializing WebXR:", error);
       }
     }
+    if(supported){
+      scene.executeWhenReady(() => {
+        console.log("Scene is ready");
+                //pop-up panel
+                const manager = new GUI.GUI3DManager(scene);
+
+                // Create a TextBlock for the content
+                const textBlock = new GUI.TextBlock();
+                textBlock.text = 
+                `Welcome to the 3D content creation demo!
+                
+                Instructions:
+                1. Click the main button on your XR controller to start voice recording.
+                2. Speak your command clearly.
+                3. Release the button to send the command.
+                
+                Example commands:
+                - "Change sphere color to blue"
+                - "Add a brown box in the middle"
+                - "Delete all objects except the torus"
+                - "Make the sphere bigger"
+                - "Add animation to the box"
+                
+                Try these or create your own commands to modify the scene!`;
+                
+                textBlock.color = "white";
+                textBlock.fontSize = 20; // Adjust as needed
+                textBlock.textWrapping = true;
+                textBlock.textHorizontalAlignment = GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
+                //textBlock.textVerticalAlignment = GUI.Control.VERTICAL_ALIGNMENT_TOP;
+
+                try {
+                  const slate = new GUI.HolographicSlate("down");
+                  slate.minDimensions = new BABYLON.Vector2(2, 2);
+                  slate.dimensions = new BABYLON.Vector2(3, 3);
+                  slate.titleBarHeight = 0.5; // Reduced from 0.75
+                  slate.titleBarTextHeight = 0.1; // Add this line to reduce title font size
+                  slate.title = "genAI assistant for 3D content creation Demo";
+                  slate.content = textBlock;
+                  slate.position = new BABYLON.Vector3(-1.5, 3, 2);
+                  manager.addControl(slate);
+              } catch (error) {
+                  console.error("Error creating HolographicSlate:", error);
+              }
+    });
+  }
     return scene;
   }, []);
 
