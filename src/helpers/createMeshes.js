@@ -62,17 +62,15 @@ function createMeshesFromConfig(scene, configurations, supported) {
             const mesh = builder(config.name, { ...config.options, updatable: true }, scene);
 
             // Position, rotation, and scaling
-            console.log("supported: ", supported);
 
             if(supported){
             console.log("Applying AR config");
-            config.position[2] = config.position[2] + 2;
             mesh.position = new BABYLON.Vector3(...(config.position || [0, 0, 0]));
             mesh.rotation = new BABYLON.Vector3(...(config.rotation || [0, 0, 0]).map(deg => deg * Math.PI / 180));
-            const scalar = 0.3;
-            config.scaling[0] = config.scaling[0] * scalar;
-            config.scaling[1] = config.scaling[1] * scalar;
-            config.scaling[2] = config.scaling[2] * scalar;
+            const scalar = 0.5;
+            config.scaling[0] =  scalar;
+            config.scaling[1] =  scalar;
+            config.scaling[2] =  scalar;
             mesh.scaling = new BABYLON.Vector3(...(config.scaling || [1, 1, 1]));
             }else{
                 console.log("Applying VR config");
@@ -82,7 +80,6 @@ function createMeshesFromConfig(scene, configurations, supported) {
             }
 
             // Animation
-            console.log("mesh: ", mesh.name, "animation: ", config.animation)
             if(config.animation){
                 var frameRate = 10;
                 var yRot = new BABYLON.Animation("yRot", "rotation.y", frameRate, BABYLON.Animation.ANIMATIONTYPE_FLOAT, BABYLON.Animation.ANIMATIONLOOPMODE_CYCLE);
@@ -163,6 +160,25 @@ function createMeshesFromConfig(scene, configurations, supported) {
     return { meshes, animationGroup };
 }
 
+function modifyDict(jsDict) {
+    for (let key in jsDict) {
+      if (jsDict.hasOwnProperty(key)) {
+        let obj = jsDict[key];
+        
+        // Decrease the last value of position by 2
+        if (obj.position && Array.isArray(obj.position)) {
+          obj.position[obj.position.length - 1] -= 2;
+        }
+        
+        // Divide all scaling values by 0.3
+        if (obj.scaling && Array.isArray(obj.scaling)) {
+          obj.scaling = obj.scaling.map(val => val / 0.3);
+        }
+      }
+    }
+    return jsDict;
+  }
+
 function updateMeshConfig(originalConfig, updatedConfig) {
     const newConfig = {};
     for (const [key, value] of Object.entries(updatedConfig)) {
@@ -200,4 +216,4 @@ function updateMeshConfig(originalConfig, updatedConfig) {
     }
 }
 
-export { createMeshesFromConfig, updateMeshConfig, disposeAllMeshes };
+export { createMeshesFromConfig, updateMeshConfig, disposeAllMeshes, modifyDict };

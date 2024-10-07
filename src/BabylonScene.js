@@ -3,7 +3,7 @@ import * as BABYLON from '@babylonjs/core';
 import "@babylonjs/loaders/glTF";
 import * as GUI from '@babylonjs/gui';
 import { callBedrockAPI } from './helpers/bedrockApi.js';
-import { createMeshesFromConfig, updateMeshConfig, disposeAllMeshes } from './helpers/createMeshes.js';
+import { createMeshesFromConfig, updateMeshConfig, disposeAllMeshes, modifyDict } from './helpers/createMeshes.js';
 import { sendAudioToAPI } from './helpers/AudioRecording.js';
 
 
@@ -20,7 +20,7 @@ const initialMeshConfigurations = {
     position: [0, 1, 0],
     rotation: [0, 0, 0],
     scaling: [1, 1, 1],
-    animation: true
+    animation: false
   },
   object2: {
     type: 'torus',
@@ -102,18 +102,40 @@ const BabylonScene = () => {
     new BABYLON.HemisphericLight("HemiLight", new BABYLON.Vector3(0, 0, 0), scene);
     new BABYLON.ShadowGenerator(1024, light);
 
+    console.log("initial config:", meshConfigurationsRef.current)
     const { meshes, animationGroup } = createMeshesFromConfig(scene, meshConfigurationsRef.current, supported);
+    console.log(meshConfigurationsRef.current);
     animationGroup.play(true);
 
     if(supported){
       try {
+        const worldScaleFactor = 5; // Adjust this value as needed
         const xrExperience = await scene.createDefaultXRExperienceAsync({
           uiOptions: {
             sessionMode: "immersive-vr",
             referenceSpaceType: "local-floor",
           },
         });
+        xrExperience.baseExperience.camera.position = new BABYLON.Vector3(0, 0, -4);
         setXR(xrExperience);
+
+        xrExperience.baseExperience.onStateChangedObservable.add((state) => {
+          if (state === BABYLON.WebXRState.IN_XR) {
+            scene.meshes.forEach(mesh => {
+              if (!mesh.parent) {
+                mesh.scaling.scaleInPlace(worldScaleFactor);
+              }
+            });
+          } else {
+            scene.meshes.forEach(mesh => {
+              if (!mesh.parent) {
+                mesh.scaling.scaleInPlace(1 / worldScaleFactor);
+              }
+            });
+          }
+        });
+        
+        
 
         const featuresManager = xrExperience.baseExperience.featuresManager;
 
@@ -134,15 +156,16 @@ const BabylonScene = () => {
             mediaRecorder.onstop = () => {
               const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
               sendAudioToAPI(audioBlob).then(response => {
-              console.log(response);    
+              console.log(response);
               const meshConfigString = JSON.stringify(meshConfigurationsRef.current, null, 2);
+              console.log(meshConfigString);
               callBedrockAPI(response, meshConfigString)
                 .then(response => {
                   console.log(response);
                   const updatedConfig = JSON.parse(response);
                   meshConfigurationsRef.current = updateMeshConfig(meshConfigurationsRef.current, updatedConfig);
                   disposeAllMeshes(scene);
-                  const { meshes, animationGroup } = createMeshesFromConfig(scene, meshConfigurationsRef.current, supported);
+                  const { meshes, animationGroup } = createMeshesFromConfig(scene, meshConfigurationsRef.current, false);
                   animationGroup.play(true);
                   forceUpdate({});  // Force a re-render
                 })
@@ -267,7 +290,7 @@ const BabylonScene = () => {
                   slate.titleBarHeight = 0.20; // Reduced from 0.75
                   slate.title = "genAI assistant for 3D content creation Demo";
                   slate.content = textBlock;
-                  slate.position = new BABYLON.Vector3(-0.75, 2.25, 1.5);
+                  slate.position = new BABYLON.Vector3(-0.75, 2.25, -2);
                   manager.addControl(slate);
               } catch (error) {
                   console.error("Error creating HolographicSlate:", error);
