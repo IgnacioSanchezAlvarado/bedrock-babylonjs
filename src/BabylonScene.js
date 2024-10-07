@@ -262,13 +262,12 @@ const BabylonScene = () => {
 
                 try {
                   const slate = new GUI.HolographicSlate("down");
-                  slate.minDimensions = new BABYLON.Vector2(2, 2);
-                  slate.dimensions = new BABYLON.Vector2(3, 3);
-                  slate.titleBarHeight = 0.5; // Reduced from 0.75
-                  slate.titleBarTextHeight = 0.1; // Add this line to reduce title font size
+                  slate.minDimensions = new BABYLON.Vector2(1, 1);
+                  slate.dimensions = new BABYLON.Vector2(1.5, 1.75);
+                  slate.titleBarHeight = 0.20; // Reduced from 0.75
                   slate.title = "genAI assistant for 3D content creation Demo";
                   slate.content = textBlock;
-                  slate.position = new BABYLON.Vector3(-1.5, 3, 2);
+                  slate.position = new BABYLON.Vector3(-0.75, 2.25, 1.5);
                   manager.addControl(slate);
               } catch (error) {
                   console.error("Error creating HolographicSlate:", error);
