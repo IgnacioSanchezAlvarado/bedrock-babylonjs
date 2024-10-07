@@ -51,7 +51,7 @@ const BabylonScene = () => {
     const scene = new BABYLON.Scene(engineRef.current);
     sceneRef.current = scene;
 
-    const supported = await BABYLON.WebXRSessionManager.IsSessionSupportedAsync('immersive-ar');
+    const supported = await BABYLON.WebXRSessionManager.IsSessionSupportedAsync('immersive-vr');
     if (!supported) {
       console.log("AR is not supported on this device");
       // ar not available, session not supported
@@ -109,7 +109,7 @@ const BabylonScene = () => {
       try {
         const xrExperience = await scene.createDefaultXRExperienceAsync({
           uiOptions: {
-            sessionMode: "immersive-ar",
+            sessionMode: "immersive-vr",
             referenceSpaceType: "local-floor",
           },
         });
