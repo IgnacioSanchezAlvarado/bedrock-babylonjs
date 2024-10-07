@@ -19,7 +19,6 @@ const initialMeshConfigurations = {
     color: 'brown',
     position: [0, 1, 0],
     rotation: [0, 0, 0],
-    scaling: [1, 1, 1],
     animation: false
   },
   object2: {
@@ -33,7 +32,6 @@ const initialMeshConfigurations = {
     color: 'Red',
     position: [0, 2, 0],
     rotation: [0, 0, 0],
-    scaling: [1, 1, 1],
     animation: false
   }
 };
@@ -109,7 +107,6 @@ const BabylonScene = () => {
 
     if(supported){
       try {
-        const worldScaleFactor = 5; // Adjust this value as needed
         const xrExperience = await scene.createDefaultXRExperienceAsync({
           uiOptions: {
             sessionMode: "immersive-vr",
@@ -118,25 +115,7 @@ const BabylonScene = () => {
         });
         xrExperience.baseExperience.camera.position = new BABYLON.Vector3(0, 0, -4);
         setXR(xrExperience);
-
-        xrExperience.baseExperience.onStateChangedObservable.add((state) => {
-          if (state === BABYLON.WebXRState.IN_XR) {
-            scene.meshes.forEach(mesh => {
-              if (!mesh.parent) {
-                mesh.scaling.scaleInPlace(worldScaleFactor);
-              }
-            });
-          } else {
-            scene.meshes.forEach(mesh => {
-              if (!mesh.parent) {
-                mesh.scaling.scaleInPlace(1 / worldScaleFactor);
-              }
-            });
-          }
-        });
-        
-        
-
+               
         const featuresManager = xrExperience.baseExperience.featuresManager;
 
         //Setting up audio recording

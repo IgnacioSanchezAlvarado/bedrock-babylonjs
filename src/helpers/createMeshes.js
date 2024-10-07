@@ -67,11 +67,7 @@ function createMeshesFromConfig(scene, configurations, supported) {
             console.log("Applying AR config");
             mesh.position = new BABYLON.Vector3(...(config.position || [0, 0, 0]));
             mesh.rotation = new BABYLON.Vector3(...(config.rotation || [0, 0, 0]).map(deg => deg * Math.PI / 180));
-            const scalar = 0.5;
-            config.scaling[0] =  scalar;
-            config.scaling[1] =  scalar;
-            config.scaling[2] =  scalar;
-            mesh.scaling = new BABYLON.Vector3(...(config.scaling || [1, 1, 1]));
+            mesh.scaling = new BABYLON.Vector3(...(config.scaling || [0.5, 0.5, 0.5]));
             }else{
                 console.log("Applying VR config");
                 mesh.position = new BABYLON.Vector3(...(config.position || [0, 0, 0]));
