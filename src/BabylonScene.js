@@ -33,8 +33,22 @@ const initialMeshConfigurations = {
     position: [0, 2, 0],
     rotation: [0, 0, 0],
     animation: false
+  },
+  object3: {
+    type: 'plane',
+    name: 'background',
+    options: {
+      height: 10,
+      width: 10
+    },
+    color: 'white',
+    position: [0, 2, 4],
+    rotation: [0, 0, 0],
+    animation: false
   }
 };
+
+const urlDict = {};
 
 const BabylonScene = () => {
   const canvasRef = useRef(null);
@@ -49,7 +63,7 @@ const BabylonScene = () => {
     const scene = new BABYLON.Scene(engineRef.current);
     sceneRef.current = scene;
 
-    const supported = await BABYLON.WebXRSessionManager.IsSessionSupportedAsync('immersive-vr');
+    const supported = await BABYLON.WebXRSessionManager.IsSessionSupportedAsync('immersive-ar');
     if (!supported) {
       console.log("AR is not supported on this device");
       // ar not available, session not supported
@@ -79,12 +93,16 @@ const BabylonScene = () => {
         if (eventData.key === "Enter") {
           const meshConfigString = JSON.stringify(meshConfigurationsRef.current, null, 2);
           callBedrockAPI(input1.text, meshConfigString)
-            .then(response => {
-              console.log(response);
-              const updatedConfig = JSON.parse(response);
+            .then(([response1, response2]) => {
+              //console.log("response1: ", response1[0]);
+              console.log("response2", response2);
+              const updatedConfig = JSON.parse(response2);
               meshConfigurationsRef.current = updateMeshConfig(meshConfigurationsRef.current, updatedConfig);
+              if(response1){
+                urlDict[response1[1]] = response1[0];
+              }
               disposeAllMeshes(scene);
-              const { meshes, animationGroup } = createMeshesFromConfig(scene, meshConfigurationsRef.current, supported);
+              const { meshes, animationGroup } = createMeshesFromConfig(scene, meshConfigurationsRef.current, urlDict);
               animationGroup.play(true);
               input1.text = "";
               forceUpdate({});  // Force a re-render
@@ -101,7 +119,7 @@ const BabylonScene = () => {
     new BABYLON.ShadowGenerator(1024, light);
 
     console.log("initial config:", meshConfigurationsRef.current)
-    const { meshes, animationGroup } = createMeshesFromConfig(scene, meshConfigurationsRef.current, supported);
+    const { meshes, animationGroup } = createMeshesFromConfig(scene, meshConfigurationsRef.current, urlDict);
     console.log(meshConfigurationsRef.current);
     animationGroup.play(true);
 
@@ -109,7 +127,7 @@ const BabylonScene = () => {
       try {
         const xrExperience = await scene.createDefaultXRExperienceAsync({
           uiOptions: {
-            sessionMode: "immersive-vr",
+            sessionMode: "immersive-ar",
             referenceSpaceType: "local-floor",
           },
         });
@@ -139,12 +157,15 @@ const BabylonScene = () => {
               const meshConfigString = JSON.stringify(meshConfigurationsRef.current, null, 2);
               console.log(meshConfigString);
               callBedrockAPI(response, meshConfigString)
-                .then(response => {
-                  console.log(response);
-                  const updatedConfig = JSON.parse(response);
+                .then(([response1, response2]) => {
+                  console.log(response2);
+                  const updatedConfig = JSON.parse(response2);
                   meshConfigurationsRef.current = updateMeshConfig(meshConfigurationsRef.current, updatedConfig);
+                  if(response1){
+                    urlDict[response1[1]] = response1[0];
+                  }
                   disposeAllMeshes(scene);
-                  const { meshes, animationGroup } = createMeshesFromConfig(scene, meshConfigurationsRef.current, false);
+                  const { meshes, animationGroup } = createMeshesFromConfig(scene, meshConfigurationsRef.current, urlDict);
                   animationGroup.play(true);
                   forceUpdate({});  // Force a re-render
                 })
@@ -179,12 +200,13 @@ const BabylonScene = () => {
           
           controller.onMotionControllerInitObservable.add((motionController) => {
             console.log("Motion controller initialized:", motionController.handedness);
-            
+
+            const xr_ids = motionController.getComponentIds();
             const mainComponent = motionController.getMainComponent();
+            const secondComponent = motionController.getComponent(xr_ids[1]);
             
             if (mainComponent) {
-              console.log("Main component found for", motionController.handedness, "controller");
-              
+              console.log("Main component found for", motionController.handedness, "controller");        
               mainComponent.onButtonStateChangedObservable.add((component) => {
                 if (component.changes.pressed) {
                   if (component.pressed) {

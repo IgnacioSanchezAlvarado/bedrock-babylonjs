@@ -1,6 +1,6 @@
 import * as BABYLON from '@babylonjs/core';
 
-function createMeshesFromConfig(scene, configurations, supported) {
+function createMeshesFromConfig(scene, configurations, urlDict) {
     const meshes = {};
     const animationGroup = new BABYLON.AnimationGroup("meshAnimations");
 
@@ -62,18 +62,9 @@ function createMeshesFromConfig(scene, configurations, supported) {
             const mesh = builder(config.name, { ...config.options, updatable: true }, scene);
 
             // Position, rotation, and scaling
-
-            if(supported){
-            console.log("Applying AR config");
             mesh.position = new BABYLON.Vector3(...(config.position || [0, 0, 0]));
             mesh.rotation = new BABYLON.Vector3(...(config.rotation || [0, 0, 0]).map(deg => deg * Math.PI / 180));
             mesh.scaling = new BABYLON.Vector3(...(config.scaling || [0.5, 0.5, 0.5]));
-            }else{
-                console.log("Applying VR config");
-                mesh.position = new BABYLON.Vector3(...(config.position || [0, 0, 0]));
-                mesh.rotation = new BABYLON.Vector3(...(config.rotation || [0, 0, 0]).map(deg => deg * Math.PI / 180));
-                mesh.scaling = new BABYLON.Vector3(...(config.scaling || [0.5, 0.5, 0.5]));
-            }
 
             // Animation
             if(config.animation){
@@ -104,9 +95,6 @@ function createMeshesFromConfig(scene, configurations, supported) {
                 console.log("Applied rotation to:", mesh.name);
             }
 
-
-
-
             // Material
             if (config.material) {
                 mesh.material = config.material;
@@ -127,6 +115,16 @@ function createMeshesFromConfig(scene, configurations, supported) {
                 material.emissiveColor = new BABYLON.Color3(0, 0, 0);
                 mesh.material = material;
             }
+
+                        //Texture
+            if(config.texture){
+                    console.log("Applying s3 url: ", urlDict[mesh.name]);
+                    const material = new BABYLON.StandardMaterial("planeMaterial", scene);
+                    material.diffuseTexture = new BABYLON.Texture(urlDict[mesh.name], scene);
+                    console.log(mesh.name);
+                    mesh.material = material;
+                    console.log("Applied texture to:", mesh.name);
+                }
 
             // Physics
             if (config.physics !== false) {
