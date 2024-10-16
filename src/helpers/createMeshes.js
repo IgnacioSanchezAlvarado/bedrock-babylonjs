@@ -64,7 +64,7 @@ function createMeshesFromConfig(scene, configurations, urlDict) {
             // Position, rotation, and scaling
             mesh.position = new BABYLON.Vector3(...(config.position || [0, 0, 0]));
             mesh.rotation = new BABYLON.Vector3(...(config.rotation || [0, 0, 0]).map(deg => deg * Math.PI / 180));
-            mesh.scaling = new BABYLON.Vector3(...(config.scaling || [0.5, 0.5, 0.5]));
+            mesh.scaling = new BABYLON.Vector3(...(config.scaling || [0.4, 0.4, 0.4]));
 
             // Animation
             if(config.animation){

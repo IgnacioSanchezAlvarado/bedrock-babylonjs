@@ -127,7 +127,7 @@ const BabylonScene = () => {
       try {
         const xrExperience = await scene.createDefaultXRExperienceAsync({
           uiOptions: {
-            sessionMode: "immersive-ar",
+            sessionMode: "immersive-vr",
             referenceSpaceType: "local-floor",
           },
         });
